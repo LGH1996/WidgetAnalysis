@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">WidgetAnalysis</string>
+    <string name="visible">&#xe60b;</string>
+    <string name="invisible">&#xe619;</string>
+    <string name="min">&#xeb60;</string>
+    <string name="close">&#xe6ab;</string>
+    <string name="drag">&#xe60c;</string>
+</resources>
