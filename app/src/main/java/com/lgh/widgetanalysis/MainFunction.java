@@ -13,6 +13,7 @@ import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -52,6 +53,8 @@ public class MainFunction {
 
     private String currentPackage;
     private String currentActivity;
+
+    private int mParamWidth, mParamHeight;
 
     public MainFunction(AccessibilityService service) {
         this.service = service;
@@ -181,19 +184,15 @@ public class MainFunction {
             bParams.alpha = 0f;
 
             viewMessageBinding.getRoot().setOnTouchListener(new View.OnTouchListener() {
-                int x = 0, y = 0;
+
+                int startX = 0, startY = 0, x = 0, y = 0;
 
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
-                            x = Math.round(event.getRawX());
-                            y = Math.round(event.getRawY());
-                            windowManager.getDefaultDisplay().getRealMetrics(metrics);
-                            aParams.x = aParams.x < 0 ? 0 : aParams.x;
-                            aParams.x = aParams.x > metrics.widthPixels - aParams.width ? metrics.widthPixels - aParams.width : aParams.x;
-                            aParams.y = aParams.y < 0 ? 0 : aParams.y;
-                            aParams.y = aParams.y > metrics.heightPixels - aParams.height ? metrics.heightPixels - aParams.height : aParams.y;
+                            startX = x = Math.round(event.getRawX());
+                            startY = y = Math.round(event.getRawY());
                             break;
                         case MotionEvent.ACTION_MOVE:
                             aParams.x = Math.round(aParams.x + (event.getRawX() - x));
@@ -203,6 +202,19 @@ public class MainFunction {
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                             break;
                         case MotionEvent.ACTION_UP:
+                            windowManager.getDefaultDisplay().getRealMetrics(metrics);
+                            aParams.x = aParams.x < 0 ? 0 : aParams.x;
+                            aParams.x = aParams.x > metrics.widthPixels - aParams.width ? metrics.widthPixels - aParams.width : aParams.x;
+                            aParams.y = aParams.y < 0 ? 0 : aParams.y;
+                            aParams.y = aParams.y > metrics.heightPixels - aParams.height ? metrics.heightPixels - aParams.height : aParams.y;
+                            if (Math.abs(event.getRawX() - startX) < 10 && Math.abs(event.getRawY() - startY) < 10) {
+                                if (viewMessageBinding.topView.getVisibility() == View.GONE) {
+                                    viewMessageBinding.topView.setVisibility(View.VISIBLE);
+                                    aParams.width = mParamWidth;
+                                    aParams.height = mParamHeight;
+                                    windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                                }
+                            }
                             break;
                     }
                     return true;
@@ -248,11 +260,13 @@ public class MainFunction {
                                 @Override
                                 public void onFocusChange(View v, boolean hasFocus) {
                                     if (hasFocus) {
-//                                        CharSequence cId = e.getViewIdResourceName();
-//                                        CharSequence cDesc = e.getContentDescription();
-//                                        CharSequence cText = e.getText();
-//                                        viewMessageBinding.message.setText("click:" + (e.isClickable() ? "true" : "false") + " " + "bonus:" + temRect.toShortString() + " " + "id:" + (cId == null ? "null" : cId.toString().substring(cId.toString().indexOf("id/") + 3)) + " " + "desc:" + (cDesc == null ? "null" : cDesc.toString()) + " " + "text:" + (cText == null ? "null" : cText.toString()));
-                                        viewMessageBinding.message.setText("包名：" + currentPackage + "\n" + "活动名：" + currentActivity + "\n" + "控件信息：" + "\n" + e.toString());
+                                        String msg = e.toString();
+                                        msg = msg.substring(msg.indexOf("boundsInParent:"), msg.lastIndexOf("actions:"));
+                                        StringBuilder str = new StringBuilder();
+                                        for (String e : msg.split(";")) {
+                                            str.append(e.trim()).append("\n");
+                                        }
+                                        viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity + "\n" + str.toString());
                                         v.setBackgroundResource(R.drawable.node_focus);
                                     } else {
                                         v.setBackgroundResource(R.drawable.node);
@@ -269,7 +283,7 @@ public class MainFunction {
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                         viewMessageBinding.onOff.setText(R.string.invisible);
                     }
-                    viewMessageBinding.message.setText("包名：" + currentPackage + "\n" + "活动名：" + currentActivity);
+                    viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity);
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
                 }
             });
@@ -284,24 +298,38 @@ public class MainFunction {
                         case MotionEvent.ACTION_DOWN:
                             x = Math.round(event.getRawX());
                             y = Math.round(event.getRawY());
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            int w = aParams.width + Math.round(event.getRawX() - x);
+                            int h = aParams.height + Math.round(event.getRawY() - y);
+                            aParams.width = w > 500 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
+                            aParams.height = h > 500 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
+                            x = Math.round(event.getRawX());
+                            y = Math.round(event.getRawY());
+                            windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            break;
+                        case MotionEvent.ACTION_UP:
                             windowManager.getDefaultDisplay().getRealMetrics(metrics);
                             aParams.x = aParams.x < 0 ? 0 : aParams.x;
                             aParams.x = aParams.x > metrics.widthPixels - aParams.width ? metrics.widthPixels - aParams.width : aParams.x;
                             aParams.y = aParams.y < 0 ? 0 : aParams.y;
                             aParams.y = aParams.y > metrics.heightPixels - aParams.height ? metrics.heightPixels - aParams.height : aParams.y;
                             break;
-                        case MotionEvent.ACTION_MOVE:
-                            int w = aParams.width + Math.round(event.getRawX() - x);
-                            int h = aParams.height + Math.round(event.getRawY() - y);
-                            aParams.width = w > 800 && w+aParams.x < metrics.widthPixels ? w : aParams.width;
-                            aParams.height = h > 400 && h+aParams.y < metrics.heightPixels? h : aParams.height;
-                            x = Math.round(event.getRawX());
-                            y = Math.round(event.getRawY());
-                            windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            break;
                     }
 
                     return true;
+                }
+            });
+
+            viewMessageBinding.min.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    mParamWidth = aParams.width;
+                    mParamHeight = aParams.height;
+                    aParams.width = 100;
+                    aParams.height = 100;
+                    viewMessageBinding.topView.setVisibility(View.GONE);
+                    windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                 }
             });
 

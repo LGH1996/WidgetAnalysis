@@ -42,19 +42,15 @@ public class MessageView extends FrameLayout implements View.OnClickListener {
     private void init(Context context) {
         inflate(context, R.layout.view_message, this);
         TextView onOff = findViewById(R.id.on_off);
-        EditText reg = findViewById(R.id.reg);
         TextView min = findViewById(R.id.min);
         TextView close = findViewById(R.id.close);
-        TextView drag = findViewById(R.id.drag);
         Typeface iconFont = Typeface.createFromAsset(context.getAssets(), "iconfont.ttf");
         onOff.setTypeface(iconFont);
         min.setTypeface(iconFont);
         close.setTypeface(iconFont);
-        drag.setTypeface(iconFont);
         onOff.setText(R.string.invisible);
         min.setText(R.string.min);
         close.setText(R.string.close);
-        drag.setText(R.string.drag);
         onOff.setOnClickListener(this);
         min.setOnClickListener(this);
         close.setOnClickListener(this);
