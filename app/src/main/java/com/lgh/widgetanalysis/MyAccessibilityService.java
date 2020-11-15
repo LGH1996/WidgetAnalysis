@@ -14,6 +14,7 @@ public class MyAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         mainFunction = new MainFunction(this);
         mainFunction.onServiceConnected();
+        mainFunction.showAnalysisFloatWindow();
     }
 
     @Override

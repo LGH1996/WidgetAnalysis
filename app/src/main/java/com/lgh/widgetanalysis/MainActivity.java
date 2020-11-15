@@ -1,7 +1,9 @@
 package com.lgh.widgetanalysis;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -13,18 +15,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView b = findViewById(R.id.button);
-        b.setOnClickListener(new View.OnClickListener() {
+        TextView button = findViewById(R.id.button0);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                if (MyAccessibilityService.mainFunction != null){
-                    MyAccessibilityService.mainFunction.showAddDataFloat();
-                    Toast.makeText(MainActivity.this, "open", Toast.LENGTH_SHORT).show();
+            public void onClick(View v) {
+                if (MyAccessibilityService.mainFunction != null) {
+                    MyAccessibilityService.mainFunction.showAnalysisFloatWindow();
                 } else {
-                    Toast.makeText(MainActivity.this, "null", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "请打开无障碍服务", Toast.LENGTH_SHORT).show();
                 }
             }
         });
-
     }
 }

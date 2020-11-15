@@ -1,19 +1,15 @@
 package com.lgh.widgetanalysis;
 
 import android.accessibilityservice.AccessibilityService;
-import android.accessibilityservice.GestureDescription;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,19 +19,17 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
 import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * adb shell pm  grant com.lgh.advertising.going android.permission.WRITE_SECURE_SETTINGS
- * adb shell settings put secure enabled_accessibility_services com.lgh.advertising.going/com.lgh.advertising.going.myfunction.MyAccessibilityService
+ * adb shell pm  grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS
+ * adb shell settings put secure enabled_accessibility_services com.lgh.widgetanalysis/com.lgh.widgetanalysis.MyAccessibilityService
  * adb shell settings put secure accessibility_enabled 1
  * <p>
  * Settings.Secure.putString(getContentResolver(),Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, getPackageName()+"/"+MyAccessibilityService.class.getName());
@@ -114,7 +108,6 @@ public class MainFunction {
         } catch (Throwable e) {
 //            e.printStackTrace();
         }
-
     }
 
     /**
@@ -143,7 +136,7 @@ public class MainFunction {
      * 创建规则时调用
      */
     @SuppressLint("ClickableViewAccessibility")
-    public void showAddDataFloat() {
+    public void showAnalysisFloatWindow() {
         try {
             if (viewMessageBinding != null || widgetSelectBinding != null) {
                 return;
@@ -226,7 +219,7 @@ public class MainFunction {
                     if (bParams.alpha == 0) {
                         AccessibilityNodeInfo root = service.getRootInActiveWindow();
                         if (root == null) return;
-                        widgetSelectBinding.frame.removeAllViews();
+
                         ArrayList<AccessibilityNodeInfo> roots = new ArrayList<>();
                         roots.add(root);
                         ArrayList<AccessibilityNodeInfo> nodeList = new ArrayList<>();
@@ -241,7 +234,7 @@ public class MainFunction {
                                 return rectB.width() * rectB.height() - rectA.width() * rectA.height();
                             }
                         });
-                        for (final AccessibilityNodeInfo e : nodeList) {
+                        for (AccessibilityNodeInfo e : nodeList) {
                             final Rect temRect = new Rect();
                             e.getBoundsInScreen(temRect);
                             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(temRect.width(), temRect.height());
@@ -275,12 +268,13 @@ public class MainFunction {
                             });
                             widgetSelectBinding.frame.addView(img, params);
                         }
-                        bParams.alpha = 0.5f;
+                        bParams.alpha = 0.8f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
                         viewMessageBinding.onOff.setText(R.string.visible);
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+                        widgetSelectBinding.frame.removeAllViews();
                         viewMessageBinding.onOff.setText(R.string.invisible);
                     }
                     viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity);
@@ -300,13 +294,15 @@ public class MainFunction {
                             y = Math.round(event.getRawY());
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            int w = aParams.width + Math.round(event.getRawX() - x);
-                            int h = aParams.height + Math.round(event.getRawY() - y);
-                            aParams.width = w > 500 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
-                            aParams.height = h > 500 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
-                            x = Math.round(event.getRawX());
-                            y = Math.round(event.getRawY());
-                            windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            if (Math.abs(event.getRawX() - x) > 5 || Math.abs(event.getRawY() - y) > 5) {
+                                int w = aParams.width + Math.round(event.getRawX() - x);
+                                int h = aParams.height + Math.round(event.getRawY() - y);
+                                aParams.width = w > 500 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
+                                aParams.height = h > 500 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
+                                x = Math.round(event.getRawX());
+                                y = Math.round(event.getRawY());
+                                windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            }
                             break;
                         case MotionEvent.ACTION_UP:
                             windowManager.getDefaultDisplay().getRealMetrics(metrics);
@@ -326,8 +322,8 @@ public class MainFunction {
                 public void onClick(View view) {
                     mParamWidth = aParams.width;
                     mParamHeight = aParams.height;
-                    aParams.width = 100;
-                    aParams.height = 100;
+                    aParams.width = 50;
+                    aParams.height = 50;
                     viewMessageBinding.topView.setVisibility(View.GONE);
                     windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                 }
@@ -347,7 +343,7 @@ public class MainFunction {
             windowManager.addView(widgetSelectBinding.getRoot(), bParams);
             windowManager.addView(viewMessageBinding.getRoot(), aParams);
         } catch (Throwable e) {
-//            e.printStackTrace();
+            e.printStackTrace();
         }
     }
 }
