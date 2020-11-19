@@ -161,10 +161,8 @@ public class MainFunction {
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
             aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            aParams.width = width;
-            aParams.height = height / 4;
-            aParams.x = (metrics.widthPixels - aParams.width) / 2;
-            aParams.y = metrics.heightPixels - aParams.height;
+            aParams.width = 700;
+            aParams.height = 500;
             aParams.alpha = 0.9f;
 
             bParams = new WindowManager.LayoutParams();
@@ -259,7 +257,7 @@ public class MainFunction {
                                         for (String e : msg.split(";")) {
                                             str.append(e.trim()).append("\n");
                                         }
-                                        viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity + "\n" + str.toString());
+                                        viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity + "\n" + str.toString().trim());
                                         v.setBackgroundResource(R.drawable.node_focus);
                                     } else {
                                         v.setBackgroundResource(R.drawable.node);
@@ -294,14 +292,24 @@ public class MainFunction {
                             y = Math.round(event.getRawY());
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            if (Math.abs(event.getRawX() - x) > 5 || Math.abs(event.getRawY() - y) > 5) {
-                                int w = aParams.width + Math.round(event.getRawX() - x);
-                                int h = aParams.height + Math.round(event.getRawY() - y);
-                                aParams.width = w > 500 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
-                                aParams.height = h > 500 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
-                                x = Math.round(event.getRawX());
-                                y = Math.round(event.getRawY());
-                                windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            int w = aParams.width + Math.round(event.getRawX() - x);
+                            int h = aParams.height + Math.round(event.getRawY() - y);
+                            aParams.width = w > 200 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
+                            aParams.height = h > 200 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
+                            x = Math.round(event.getRawX());
+                            y = Math.round(event.getRawY());
+                            windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            if ((aParams.width < 350 || aParams.height < 350)) {
+                                if (viewMessageBinding.toolBar.getVisibility() != View.GONE)
+                                    viewMessageBinding.toolBar.setVisibility(View.GONE);
+                            } else {
+                                if (viewMessageBinding.toolBar.getVisibility() != View.VISIBLE)
+                                    viewMessageBinding.toolBar.setVisibility(View.VISIBLE);
+                            }
+                            if (aParams.width < 500) {
+                                viewMessageBinding.min.setVisibility(View.GONE);
+                            } else {
+                                viewMessageBinding.min.setVisibility(View.VISIBLE);
                             }
                             break;
                         case MotionEvent.ACTION_UP:
