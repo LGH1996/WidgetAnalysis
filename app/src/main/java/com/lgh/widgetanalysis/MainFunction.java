@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -24,6 +25,8 @@ import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
 import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -49,6 +52,9 @@ public class MainFunction {
     private String currentActivity;
 
     private int mParamWidth, mParamHeight;
+    private int currentPosition;
+
+    private ArrayList<AccessibilityNodeInfo> nodeInfoList;
 
     public MainFunction(AccessibilityService service) {
         this.service = service;
@@ -150,18 +156,18 @@ public class MainFunction {
             viewMessageBinding.onOff.setTypeface(iconFont);
             viewMessageBinding.min.setTypeface(iconFont);
             viewMessageBinding.close.setTypeface(iconFont);
+            viewMessageBinding.left.setTypeface(iconFont);
+            viewMessageBinding.right.setTypeface(iconFont);
 
             final DisplayMetrics metrics = new DisplayMetrics();
             windowManager.getDefaultDisplay().getRealMetrics(metrics);
-            int width = Math.min(metrics.heightPixels, metrics.widthPixels);
-            int height = Math.max(metrics.heightPixels, metrics.widthPixels);
 
             aParams = new WindowManager.LayoutParams();
             aParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
             aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            aParams.width = 700;
+            aParams.width = 800;
             aParams.height = 500;
             aParams.alpha = 0.9f;
 
@@ -215,68 +221,55 @@ public class MainFunction {
                 @Override
                 public void onClick(View v) {
                     if (bParams.alpha == 0) {
-                        AccessibilityNodeInfo root = service.getRootInActiveWindow();
-                        if (root == null) return;
-
-                        ArrayList<AccessibilityNodeInfo> roots = new ArrayList<>();
-                        roots.add(root);
-                        ArrayList<AccessibilityNodeInfo> nodeList = new ArrayList<>();
-                        findAllNode(roots, nodeList);
-                        nodeList.sort(new Comparator<AccessibilityNodeInfo>() {
-                            @Override
-                            public int compare(AccessibilityNodeInfo a, AccessibilityNodeInfo b) {
-                                Rect rectA = new Rect();
-                                Rect rectB = new Rect();
-                                a.getBoundsInScreen(rectA);
-                                b.getBoundsInScreen(rectB);
-                                return rectB.width() * rectB.height() - rectA.width() * rectA.height();
+                        nodeInfoList = new ArrayList<>();
+                        AccessibilityNodeInfo mainNodeInfo = service.getRootInActiveWindow();
+                        List<AccessibilityWindowInfo> windowInfoList = service.getWindows();
+                        for (AccessibilityWindowInfo e : windowInfoList) {
+                            AccessibilityNodeInfo node = e.getRoot();
+                            if (node != null && !node.getPackageName().equals(service.getPackageName())) {
+                                nodeInfoList.add(node);
                             }
-                        });
-                        for (AccessibilityNodeInfo e : nodeList) {
-                            final Rect temRect = new Rect();
-                            e.getBoundsInScreen(temRect);
-                            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(temRect.width(), temRect.height());
-                            params.leftMargin = temRect.left;
-                            params.topMargin = temRect.top;
-                            final ImageView img = new ImageView(service);
-                            img.setBackgroundResource(R.drawable.node);
-                            img.setFocusableInTouchMode(true);
-                            img.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    v.requestFocus();
-                                }
-                            });
-                            img.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                                @Override
-                                public void onFocusChange(View v, boolean hasFocus) {
-                                    if (hasFocus) {
-                                        String msg = e.toString();
-                                        msg = msg.substring(msg.indexOf("boundsInParent:"), msg.lastIndexOf("actions:"));
-                                        StringBuilder str = new StringBuilder();
-                                        for (String e : msg.split(";")) {
-                                            str.append(e.trim()).append("\n");
-                                        }
-                                        viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity + "\n" + str.toString().trim());
-                                        v.setBackgroundResource(R.drawable.node_focus);
-                                    } else {
-                                        v.setBackgroundResource(R.drawable.node);
-                                    }
-                                }
-                            });
-                            widgetSelectBinding.frame.addView(img, params);
                         }
-                        bParams.alpha = 0.8f;
-                        bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-                        viewMessageBinding.onOff.setText(R.string.visible);
+                        if (!nodeInfoList.isEmpty()) {
+                            currentPosition = nodeInfoList.indexOf(mainNodeInfo != null ? mainNodeInfo : 0);
+                            currentPosition = currentPosition != -1 ? currentPosition : 0;
+                            refreshLayout(nodeInfoList.get(currentPosition));
+                            bParams.alpha = 0.8f;
+                            bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                            viewMessageBinding.onOff.setText(R.string.visible);
+                            viewMessageBinding.left.setVisibility(View.VISIBLE);
+                            viewMessageBinding.right.setVisibility(View.VISIBLE);
+                        }
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                         widgetSelectBinding.frame.removeAllViews();
                         viewMessageBinding.onOff.setText(R.string.invisible);
+                        viewMessageBinding.left.setVisibility(View.INVISIBLE);
+                        viewMessageBinding.right.setVisibility(View.INVISIBLE);
                     }
                     viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity);
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
+                }
+            });
+
+            viewMessageBinding.left.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (++currentPosition > nodeInfoList.size() - 1) {
+                        currentPosition = 0;
+                    }
+                    refreshLayout(nodeInfoList.get(currentPosition));
+                }
+            });
+
+            viewMessageBinding.right.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (--currentPosition < 0) {
+                        currentPosition = nodeInfoList.size() - 1;
+                    }
+                    refreshLayout(nodeInfoList.get(currentPosition));
                 }
             });
 
@@ -299,17 +292,12 @@ public class MainFunction {
                             x = Math.round(event.getRawX());
                             y = Math.round(event.getRawY());
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            if ((aParams.width < 350 || aParams.height < 350)) {
+                            if ((aParams.width < 800 || aParams.height < 500)) {
                                 if (viewMessageBinding.toolBar.getVisibility() != View.GONE)
                                     viewMessageBinding.toolBar.setVisibility(View.GONE);
                             } else {
                                 if (viewMessageBinding.toolBar.getVisibility() != View.VISIBLE)
                                     viewMessageBinding.toolBar.setVisibility(View.VISIBLE);
-                            }
-                            if (aParams.width < 500) {
-                                viewMessageBinding.min.setVisibility(View.GONE);
-                            } else {
-                                viewMessageBinding.min.setVisibility(View.VISIBLE);
                             }
                             break;
                         case MotionEvent.ACTION_UP:
@@ -352,6 +340,56 @@ public class MainFunction {
             windowManager.addView(viewMessageBinding.getRoot(), aParams);
         } catch (Throwable e) {
             e.printStackTrace();
+        }
+    }
+
+    private void refreshLayout(AccessibilityNodeInfo root) {
+        ArrayList<AccessibilityNodeInfo> nodeList = new ArrayList<>();
+        findAllNode(Collections.singletonList(root), nodeList);
+        nodeList.sort(new Comparator<AccessibilityNodeInfo>() {
+            @Override
+            public int compare(AccessibilityNodeInfo a, AccessibilityNodeInfo b) {
+                Rect rectA = new Rect();
+                Rect rectB = new Rect();
+                a.getBoundsInScreen(rectA);
+                b.getBoundsInScreen(rectB);
+                return rectB.width() * rectB.height() - rectA.width() * rectA.height();
+            }
+        });
+        widgetSelectBinding.frame.removeAllViews();
+        for (AccessibilityNodeInfo e : nodeList) {
+            final Rect temRect = new Rect();
+            e.getBoundsInScreen(temRect);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(temRect.width(), temRect.height());
+            params.leftMargin = temRect.left;
+            params.topMargin = temRect.top;
+            final ImageView img = new ImageView(service);
+            img.setBackgroundResource(R.drawable.node);
+            img.setFocusableInTouchMode(true);
+            img.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    v.requestFocus();
+                }
+            });
+            img.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        String msg = e.toString();
+                        msg = msg.substring(msg.indexOf("boundsInParent:"), msg.lastIndexOf("actions:"));
+                        StringBuilder str = new StringBuilder();
+                        for (String e : msg.split(";")) {
+                            str.append(e.trim()).append("\n");
+                        }
+                        viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity + "\n" + str.toString().trim());
+                        v.setBackgroundResource(R.drawable.node_focus);
+                    } else {
+                        v.setBackgroundResource(R.drawable.node);
+                    }
+                }
+            });
+            widgetSelectBinding.frame.addView(img, params);
         }
     }
 }
