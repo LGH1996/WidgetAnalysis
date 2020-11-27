@@ -3,11 +3,20 @@ package com.lgh.widgetanalysis;
 import android.accessibilityservice.AccessibilityService;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
+import android.media.Image;
+import android.media.ImageReader;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,6 +33,7 @@ import android.widget.TextView;
 import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
 import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +66,10 @@ public class MainFunction {
 
     private ArrayList<AccessibilityNodeInfo> nodeInfoList;
 
+    private VirtualDisplay mVirtualDisplay;
+    private ImageReader mImageReader;
+    private Bitmap mBitmap;
+
     public MainFunction(AccessibilityService service) {
         this.service = service;
     }
@@ -65,6 +79,12 @@ public class MainFunction {
             windowManager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
         } catch (Throwable throwable) {
 //            throwable.printStackTrace();
+        }
+    }
+
+    public void onUnbind() {
+        if (mVirtualDisplay != null) {
+            mVirtualDisplay.release();
         }
     }
 
@@ -231,6 +251,7 @@ public class MainFunction {
                             }
                         }
                         if (!nodeInfoList.isEmpty()) {
+                            mBitmap = getCapture();
                             currentPosition = nodeInfoList.indexOf(mainNodeInfo != null ? mainNodeInfo : 0);
                             currentPosition = currentPosition != -1 ? currentPosition : 0;
                             refreshLayout(nodeInfoList.get(currentPosition));
@@ -247,6 +268,7 @@ public class MainFunction {
                         viewMessageBinding.onOff.setText(R.string.invisible);
                         viewMessageBinding.left.setVisibility(View.INVISIBLE);
                         viewMessageBinding.right.setVisibility(View.INVISIBLE);
+                        mBitmap = null;
                     }
                     viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity);
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
@@ -357,6 +379,9 @@ public class MainFunction {
             }
         });
         widgetSelectBinding.frame.removeAllViews();
+        ImageView bg = new ImageView(service);
+        bg.setImageBitmap(mBitmap);
+        widgetSelectBinding.frame.addView(bg, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         for (AccessibilityNodeInfo e : nodeList) {
             final Rect temRect = new Rect();
             e.getBoundsInScreen(temRect);
@@ -391,5 +416,30 @@ public class MainFunction {
             });
             widgetSelectBinding.frame.addView(img, params);
         }
+    }
+
+    @SuppressLint("WrongConstant")
+    public void initCapture(int resultCode, Intent data) {
+        WindowManager mWindowManager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        mWindowManager.getDefaultDisplay().getRealMetrics(metrics);
+        mImageReader = ImageReader.newInstance(metrics.widthPixels, metrics.heightPixels, PixelFormat.RGBA_8888, 2);
+        MediaProjection mediaProjection = ((MediaProjectionManager) service.getSystemService(Context.MEDIA_PROJECTION_SERVICE)).getMediaProjection(resultCode, data);
+        mVirtualDisplay = mediaProjection.createVirtualDisplay("ScreenCapture", metrics.widthPixels, metrics.heightPixels, metrics.densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mImageReader.getSurface(), null, null);
+    }
+
+    public Bitmap getCapture() {
+        Image image = mImageReader.acquireLatestImage();
+        int width = image.getWidth();
+        int height = image.getHeight();
+        Image.Plane[] planes = image.getPlanes();
+        ByteBuffer buffer = planes[0].getBuffer();
+        int pixelStride = planes[0].getPixelStride();
+        int rowStride = planes[0].getRowStride();
+        int rowPadding = rowStride - pixelStride * width;
+        Bitmap mBitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
+        mBitmap.copyPixelsFromBuffer(buffer);
+        image.close();
+        return Bitmap.createBitmap(mBitmap, 0, 0, width, height);
     }
 }

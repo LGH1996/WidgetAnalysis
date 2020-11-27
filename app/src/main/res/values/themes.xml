@@ -1,4 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.WidgetAnalysis" parent="@android:style/Theme.NoDisplay"/>
+<!--    <style name="Theme.WidgetAnalysis" parent="@android:style/Theme.NoDisplay"/>-->
+    <style name="Theme.WidgetAnalysis" parent="@style/Theme.MaterialComponents.Light.NoActionBar"/>
 </resources>

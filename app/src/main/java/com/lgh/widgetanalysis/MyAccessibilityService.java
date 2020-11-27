@@ -14,7 +14,6 @@ public class MyAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         mainFunction = new MainFunction(this);
         mainFunction.onServiceConnected();
-        mainFunction.showAnalysisFloatWindow();
     }
 
     @Override
@@ -30,6 +29,7 @@ public class MyAccessibilityService extends AccessibilityService {
 
     @Override
     public boolean onUnbind(Intent intent) {
+        mainFunction.onUnbind();
         mainFunction = null;
         return super.onUnbind(intent);
     }
