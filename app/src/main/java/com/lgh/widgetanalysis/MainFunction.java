@@ -29,6 +29,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
 import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
@@ -39,6 +40,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * adb shell pm  grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS
@@ -64,7 +67,7 @@ public class MainFunction {
     private int mParamWidth, mParamHeight;
     private int currentPosition;
 
-    private ArrayList<AccessibilityNodeInfo> nodeInfoList;
+    private ArrayList<ArrayList<AccessibilityNodeInfo>> nodeInfoList;
 
     private VirtualDisplay mVirtualDisplay;
     private ImageReader mImageReader;
@@ -242,25 +245,38 @@ public class MainFunction {
                 public void onClick(View v) {
                     if (bParams.alpha == 0) {
                         nodeInfoList = new ArrayList<>();
-                        AccessibilityNodeInfo mainNodeInfo = service.getRootInActiveWindow();
                         List<AccessibilityWindowInfo> windowInfoList = service.getWindows();
                         for (AccessibilityWindowInfo e : windowInfoList) {
                             AccessibilityNodeInfo node = e.getRoot();
                             if (node != null && !node.getPackageName().equals(service.getPackageName())) {
-                                nodeInfoList.add(node);
+                                ArrayList<AccessibilityNodeInfo> nodeList = new ArrayList<>();
+                                findAllNode(Collections.singletonList(node), nodeList);
+                                nodeList.sort(new Comparator<AccessibilityNodeInfo>() {
+                                    @Override
+                                    public int compare(AccessibilityNodeInfo a, AccessibilityNodeInfo b) {
+                                        Rect rectA = new Rect();
+                                        Rect rectB = new Rect();
+                                        a.getBoundsInScreen(rectA);
+                                        b.getBoundsInScreen(rectB);
+                                        return rectB.width() * rectB.height() - rectA.width() * rectA.height();
+                                    }
+                                });
+                                nodeInfoList.add(nodeList);
                             }
                         }
-                        if (!nodeInfoList.isEmpty()) {
-                            mBitmap = getCapture();
-                            currentPosition = nodeInfoList.indexOf(mainNodeInfo != null ? mainNodeInfo : 0);
-                            currentPosition = currentPosition != -1 ? currentPosition : 0;
-                            refreshLayout(nodeInfoList.get(currentPosition));
-                            bParams.alpha = 0.8f;
-                            bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-                            viewMessageBinding.onOff.setText(R.string.visible);
-                            viewMessageBinding.left.setVisibility(View.VISIBLE);
-                            viewMessageBinding.right.setVisibility(View.VISIBLE);
-                        }
+                        nodeInfoList.sort(new Comparator<ArrayList<AccessibilityNodeInfo>>() {
+                            @Override
+                            public int compare(ArrayList<AccessibilityNodeInfo> o1, ArrayList<AccessibilityNodeInfo> o2) {
+                                return o2.size() - o1.size();
+                            }
+                        });
+                        mBitmap = getCapture();
+                        refreshLayout(nodeInfoList.get(currentPosition = 0));
+                        bParams.alpha = 1f;
+                        bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                        viewMessageBinding.onOff.setText(R.string.visible);
+                        viewMessageBinding.left.setVisibility(View.VISIBLE);
+                        viewMessageBinding.right.setVisibility(View.VISIBLE);
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -268,9 +284,8 @@ public class MainFunction {
                         viewMessageBinding.onOff.setText(R.string.invisible);
                         viewMessageBinding.left.setVisibility(View.INVISIBLE);
                         viewMessageBinding.right.setVisibility(View.INVISIBLE);
-                        mBitmap = null;
                     }
-                    viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity);
+                    viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
                 }
             });
@@ -278,8 +293,8 @@ public class MainFunction {
             viewMessageBinding.left.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (++currentPosition > nodeInfoList.size() - 1) {
-                        currentPosition = 0;
+                    if (--currentPosition < 0) {
+                        currentPosition = nodeInfoList.size() - 1;
                     }
                     refreshLayout(nodeInfoList.get(currentPosition));
                 }
@@ -288,8 +303,8 @@ public class MainFunction {
             viewMessageBinding.right.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (--currentPosition < 0) {
-                        currentPosition = nodeInfoList.size() - 1;
+                    if (++currentPosition > nodeInfoList.size() - 1) {
+                        currentPosition = 0;
                     }
                     refreshLayout(nodeInfoList.get(currentPosition));
                 }
@@ -365,19 +380,7 @@ public class MainFunction {
         }
     }
 
-    private void refreshLayout(AccessibilityNodeInfo root) {
-        ArrayList<AccessibilityNodeInfo> nodeList = new ArrayList<>();
-        findAllNode(Collections.singletonList(root), nodeList);
-        nodeList.sort(new Comparator<AccessibilityNodeInfo>() {
-            @Override
-            public int compare(AccessibilityNodeInfo a, AccessibilityNodeInfo b) {
-                Rect rectA = new Rect();
-                Rect rectB = new Rect();
-                a.getBoundsInScreen(rectA);
-                b.getBoundsInScreen(rectB);
-                return rectB.width() * rectB.height() - rectA.width() * rectA.height();
-            }
-        });
+    private void refreshLayout(ArrayList<AccessibilityNodeInfo> nodeList) {
         widgetSelectBinding.frame.removeAllViews();
         ImageView bg = new ImageView(service);
         bg.setImageBitmap(mBitmap);
@@ -407,7 +410,7 @@ public class MainFunction {
                         for (String e : msg.split(";")) {
                             str.append(e.trim()).append("\n");
                         }
-                        viewMessageBinding.message.setText("package:" + currentPackage + "\n" + "activity:" + currentActivity + "\n" + str.toString().trim());
+                        viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity + "\n" + str.toString().trim());
                         v.setBackgroundResource(R.drawable.node_focus);
                     } else {
                         v.setBackgroundResource(R.drawable.node);
