@@ -243,6 +243,7 @@ public class MainFunction {
             viewMessageBinding.onOff.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (bParams.alpha == 0) {
                         nodeInfoList = new ArrayList<>();
                         List<AccessibilityWindowInfo> windowInfoList = service.getWindows();
@@ -285,7 +286,6 @@ public class MainFunction {
                         viewMessageBinding.left.setVisibility(View.INVISIBLE);
                         viewMessageBinding.right.setVisibility(View.INVISIBLE);
                     }
-                    viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
                 }
             });
@@ -293,6 +293,7 @@ public class MainFunction {
             viewMessageBinding.left.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (--currentPosition < 0) {
                         currentPosition = nodeInfoList.size() - 1;
                     }
@@ -303,6 +304,7 @@ public class MainFunction {
             viewMessageBinding.right.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (++currentPosition > nodeInfoList.size() - 1) {
                         currentPosition = 0;
                     }
@@ -417,12 +419,19 @@ public class MainFunction {
                     }
                 }
             });
+            if (e.isFocused()) {
+                img.requestFocus();
+                ImageView imgFocus = new ImageView(service);
+                imgFocus.setBackgroundResource(R.drawable.is_focus);
+                widgetSelectBinding.frame.addView(imgFocus, params);
+            }
             widgetSelectBinding.frame.addView(img, params);
         }
     }
 
     @SuppressLint("WrongConstant")
     public void initCapture(int resultCode, Intent data) {
+        if (mVirtualDisplay != null) return;
         WindowManager mWindowManager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
         DisplayMetrics metrics = new DisplayMetrics();
         mWindowManager.getDefaultDisplay().getRealMetrics(metrics);
