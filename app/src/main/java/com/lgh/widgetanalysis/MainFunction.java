@@ -132,9 +132,7 @@ public class MainFunction {
                 aParams.y = 0;
                 aParams.width = 150;
                 aParams.height = 150;
-                viewMessageBinding.left.setVisibility(View.GONE);
-                viewMessageBinding.right.setVisibility(View.GONE);
-                viewMessageBinding.min.setVisibility(View.GONE);
+                setViewVisibility(View.GONE);
                 windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
             }
         } catch (Throwable e) {
@@ -335,17 +333,9 @@ public class MainFunction {
                             y = Math.round(event.getRawY());
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                             if (aParams.width < 300) {
-//                                if (viewMessageBinding.toolBar.getVisibility() != View.GONE)
-//                                    viewMessageBinding.toolBar.setVisibility(View.GONE);
-                                viewMessageBinding.left.setVisibility(View.GONE);
-                                viewMessageBinding.right.setVisibility(View.GONE);
-                                viewMessageBinding.min.setVisibility(View.GONE);
+                                setViewVisibility(View.GONE);
                             } else {
-//                                if (viewMessageBinding.toolBar.getVisibility() != View.VISIBLE)
-//                                    viewMessageBinding.toolBar.setVisibility(View.VISIBLE);
-                                viewMessageBinding.left.setVisibility(View.VISIBLE);
-                                viewMessageBinding.right.setVisibility(View.VISIBLE);
-                                viewMessageBinding.min.setVisibility(View.VISIBLE);
+                                setViewVisibility(View.VISIBLE);
                             }
                             break;
                         case MotionEvent.ACTION_UP:
@@ -462,5 +452,11 @@ public class MainFunction {
         mBitmap.copyPixelsFromBuffer(buffer);
         image.close();
         return Bitmap.createBitmap(mBitmap, 0, 0, width, height);
+    }
+
+    private void setViewVisibility(int visibility) {
+        viewMessageBinding.left.setVisibility(visibility);
+        viewMessageBinding.right.setVisibility(visibility);
+        viewMessageBinding.min.setVisibility(visibility);
     }
 }
