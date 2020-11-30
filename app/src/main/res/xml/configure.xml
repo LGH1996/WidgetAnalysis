@@ -3,4 +3,5 @@
     android:accessibilityEventTypes="typeWindowStateChanged"
     android:accessibilityFeedbackType="feedbackAllMask"
     android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds|flagIncludeNotImportantViews"
+    android:canRequestFilterKeyEvents="true"
     android:canRetrieveWindowContent="true" />

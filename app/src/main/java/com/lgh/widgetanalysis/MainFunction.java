@@ -1,6 +1,7 @@
 package com.lgh.widgetanalysis;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -16,9 +17,9 @@ import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,12 +37,9 @@ import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * adb shell pm  grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS
@@ -73,6 +71,8 @@ public class MainFunction {
     private ImageReader mImageReader;
     private Bitmap mBitmap;
 
+    private AccessibilityServiceInfo serviceInfo;
+
     public MainFunction(AccessibilityService service) {
         this.service = service;
     }
@@ -80,6 +80,7 @@ public class MainFunction {
     protected void onServiceConnected() {
         try {
             windowManager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
+            serviceInfo = service.getServiceInfo();
         } catch (Throwable throwable) {
 //            throwable.printStackTrace();
         }
@@ -111,6 +112,15 @@ public class MainFunction {
         } catch (Throwable throwable) {
 //            throwable.printStackTrace();
         }
+    }
+
+    public boolean onKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            Toast toast = Toast.makeText(service, KeyEvent.keyCodeToString(event.getKeyCode()) + " : " + event.getKeyCode(), Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.TOP | Gravity.END, 0, 0);
+            toast.show();
+        }
+        return false;
     }
 
     public void onConfigurationChanged(Configuration newConfig) {
@@ -171,6 +181,10 @@ public class MainFunction {
             if (viewMessageBinding != null || widgetSelectBinding != null) {
                 return;
             }
+
+            serviceInfo.flags |= AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
+            service.setServiceInfo(serviceInfo);
+
             final LayoutInflater inflater = LayoutInflater.from(service);
 
             widgetSelectBinding = ViewWidgetSelectBinding.inflate(inflater);
@@ -365,6 +379,8 @@ public class MainFunction {
             viewMessageBinding.close.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    serviceInfo.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
+                    service.setServiceInfo(serviceInfo);
                     windowManager.removeViewImmediate(widgetSelectBinding.getRoot());
                     windowManager.removeViewImmediate(viewMessageBinding.getRoot());
                     widgetSelectBinding = null;

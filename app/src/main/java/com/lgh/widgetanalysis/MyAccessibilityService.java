@@ -3,6 +3,7 @@ package com.lgh.widgetanalysis;
 import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 
 public class MyAccessibilityService extends AccessibilityService {
@@ -19,6 +20,11 @@ public class MyAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         mainFunction.onAccessibilityEvent(event);
+    }
+
+    @Override
+    protected boolean onKeyEvent(KeyEvent event) {
+        return mainFunction.onKeyEvent(event);
     }
 
     @Override
