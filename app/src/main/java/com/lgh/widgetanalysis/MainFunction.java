@@ -118,21 +118,24 @@ public class MainFunction {
             if (viewMessageBinding != null && widgetSelectBinding != null) {
                 DisplayMetrics metrics = new DisplayMetrics();
                 windowManager.getDefaultDisplay().getRealMetrics(metrics);
-                aParams.width = metrics.widthPixels;
-                aParams.height = metrics.heightPixels / 4;
-                aParams.x = (metrics.widthPixels - aParams.width) / 2;
-                aParams.y = metrics.heightPixels - aParams.height;
                 bParams.width = metrics.widthPixels;
                 bParams.height = metrics.heightPixels;
-                windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                 widgetSelectBinding.frame.removeAllViews();
                 TextView text = new TextView(service);
                 text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
                 text.setGravity(Gravity.CENTER);
                 text.setTextColor(0xffff0000);
                 text.setText("请重新刷新布局");
-                windowManager.updateViewLayout(widgetSelectBinding.frame, bParams);
                 widgetSelectBinding.frame.addView(text, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
+                windowManager.updateViewLayout(widgetSelectBinding.frame, bParams);
+                aParams.x = 0;
+                aParams.y = 0;
+                aParams.width = 150;
+                aParams.height = 150;
+                viewMessageBinding.left.setVisibility(View.GONE);
+                viewMessageBinding.right.setVisibility(View.GONE);
+                viewMessageBinding.min.setVisibility(View.GONE);
+                windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
             }
         } catch (Throwable e) {
 //            e.printStackTrace();
@@ -190,8 +193,8 @@ public class MainFunction {
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
             aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            aParams.width = 800;
-            aParams.height = 500;
+            aParams.width = 150;
+            aParams.height = 150;
             aParams.alpha = 0.9f;
 
             bParams = new WindowManager.LayoutParams();
@@ -276,15 +279,15 @@ public class MainFunction {
                         bParams.alpha = 1f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
                         viewMessageBinding.onOff.setText(R.string.visible);
-                        viewMessageBinding.left.setVisibility(View.VISIBLE);
-                        viewMessageBinding.right.setVisibility(View.VISIBLE);
+                        viewMessageBinding.left.setClickable(true);
+                        viewMessageBinding.right.setClickable(true);
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
                         widgetSelectBinding.frame.removeAllViews();
                         viewMessageBinding.onOff.setText(R.string.invisible);
-                        viewMessageBinding.left.setVisibility(View.INVISIBLE);
-                        viewMessageBinding.right.setVisibility(View.INVISIBLE);
+                        viewMessageBinding.left.setClickable(false);
+                        viewMessageBinding.right.setClickable(false);
                     }
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
                 }
@@ -326,17 +329,23 @@ public class MainFunction {
                         case MotionEvent.ACTION_MOVE:
                             int w = aParams.width + Math.round(event.getRawX() - x);
                             int h = aParams.height + Math.round(event.getRawY() - y);
-                            aParams.width = w > 200 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
-                            aParams.height = h > 200 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
+                            aParams.width = w > 150 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
+                            aParams.height = h > 150 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
                             x = Math.round(event.getRawX());
                             y = Math.round(event.getRawY());
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            if ((aParams.width < 800 || aParams.height < 500)) {
-                                if (viewMessageBinding.toolBar.getVisibility() != View.GONE)
-                                    viewMessageBinding.toolBar.setVisibility(View.GONE);
+                            if (aParams.width < 300) {
+//                                if (viewMessageBinding.toolBar.getVisibility() != View.GONE)
+//                                    viewMessageBinding.toolBar.setVisibility(View.GONE);
+                                viewMessageBinding.left.setVisibility(View.GONE);
+                                viewMessageBinding.right.setVisibility(View.GONE);
+                                viewMessageBinding.min.setVisibility(View.GONE);
                             } else {
-                                if (viewMessageBinding.toolBar.getVisibility() != View.VISIBLE)
-                                    viewMessageBinding.toolBar.setVisibility(View.VISIBLE);
+//                                if (viewMessageBinding.toolBar.getVisibility() != View.VISIBLE)
+//                                    viewMessageBinding.toolBar.setVisibility(View.VISIBLE);
+                                viewMessageBinding.left.setVisibility(View.VISIBLE);
+                                viewMessageBinding.right.setVisibility(View.VISIBLE);
+                                viewMessageBinding.min.setVisibility(View.VISIBLE);
                             }
                             break;
                         case MotionEvent.ACTION_UP:

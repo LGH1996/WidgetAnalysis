@@ -43,7 +43,7 @@
                 android:text="@string/left"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:visibility="invisible"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/right"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -58,7 +58,7 @@
                 android:text="@string/right"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:visibility="invisible"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/min"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -73,6 +73,7 @@
                 android:text="@string/min"
                 android:textColor="@color/white"
                 android:textSize="20sp"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/close"
                 app:layout_constraintTop_toTopOf="parent" />

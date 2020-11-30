@@ -47,7 +47,7 @@ public class MainActivity extends Activity {
         if (requestCode == 0x01 && resultCode == RESULT_OK && data != null) {
             MyAccessibilityService.mainFunction.initCapture(resultCode, data);
             MyAccessibilityService.mainFunction.showAnalysisFloatWindow();
-            Toast.makeText(this, "截屏请求成功", Toast.LENGTH_SHORT).show();
+            finishAndRemoveTask();
         } else {
             Toast.makeText(this, "截屏请求失败", Toast.LENGTH_SHORT).show();
         }
