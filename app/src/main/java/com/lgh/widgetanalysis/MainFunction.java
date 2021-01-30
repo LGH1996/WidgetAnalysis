@@ -156,16 +156,19 @@ public class MainFunction {
      */
     private void findAllNode(List<AccessibilityNodeInfo> roots, List<AccessibilityNodeInfo> list) {
         try {
-            ArrayList<AccessibilityNodeInfo> temList = new ArrayList<>();
+            ArrayList<AccessibilityNodeInfo> tem = new ArrayList<>();
             for (AccessibilityNodeInfo e : roots) {
                 if (e == null) continue;
+                Rect rect = new Rect();
+                e.getBoundsInScreen(rect);
+                if (rect.width() <= 0 || rect.height() <= 0) continue;
                 list.add(e);
                 for (int n = 0; n < e.getChildCount(); n++) {
-                    temList.add(e.getChild(n));
+                    tem.add(e.getChild(n));
                 }
             }
-            if (!temList.isEmpty()) {
-                findAllNode(temList, list);
+            if (!tem.isEmpty()) {
+                findAllNode(tem, list);
             }
         } catch (Throwable e) {
 //            e.printStackTrace();
