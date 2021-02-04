@@ -17,7 +17,6 @@ import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.util.DisplayMetrics;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -29,7 +28,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
@@ -126,24 +124,11 @@ public class MainFunction {
     public void onConfigurationChanged(Configuration newConfig) {
         try {
             if (viewMessageBinding != null && widgetSelectBinding != null) {
-                DisplayMetrics metrics = new DisplayMetrics();
-                windowManager.getDefaultDisplay().getRealMetrics(metrics);
-                bParams.width = metrics.widthPixels;
-                bParams.height = metrics.heightPixels;
-                widgetSelectBinding.frame.removeAllViews();
-                TextView text = new TextView(service);
-                text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
-                text.setGravity(Gravity.CENTER);
-                text.setTextColor(0xffff0000);
-                text.setText("请重新刷新布局");
-                widgetSelectBinding.frame.addView(text, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
-                windowManager.updateViewLayout(widgetSelectBinding.frame, bParams);
-                aParams.x = 0;
-                aParams.y = 0;
-                aParams.width = 150;
-                aParams.height = 150;
-                setViewVisibility(View.GONE);
-                windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                windowManager.removeView(viewMessageBinding.getRoot());
+                windowManager.removeView(widgetSelectBinding.getRoot());
+                viewMessageBinding = null;
+                widgetSelectBinding = null;
+                showAnalysisFloatWindow();
             }
         } catch (Throwable e) {
 //            e.printStackTrace();
@@ -260,6 +245,7 @@ public class MainFunction {
             viewMessageBinding.onOff.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
                     viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (bParams.alpha == 0) {
                         nodeInfoList = new ArrayList<>();
@@ -458,18 +444,21 @@ public class MainFunction {
     }
 
     public Bitmap getCapture() {
-        Image image = mImageReader.acquireLatestImage();
-        int width = image.getWidth();
-        int height = image.getHeight();
-        Image.Plane[] planes = image.getPlanes();
-        ByteBuffer buffer = planes[0].getBuffer();
-        int pixelStride = planes[0].getPixelStride();
-        int rowStride = planes[0].getRowStride();
-        int rowPadding = rowStride - pixelStride * width;
-        Bitmap mBitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
-        mBitmap.copyPixelsFromBuffer(buffer);
-        image.close();
-        return Bitmap.createBitmap(mBitmap, 0, 0, width, height);
+        while (true) {
+            Image image = mImageReader.acquireLatestImage();
+            if (image == null) continue;
+            int width = image.getWidth();
+            int height = image.getHeight();
+            Image.Plane[] planes = image.getPlanes();
+            ByteBuffer buffer = planes[0].getBuffer();
+            int pixelStride = planes[0].getPixelStride();
+            int rowStride = planes[0].getRowStride();
+            int rowPadding = rowStride - pixelStride * width;
+            Bitmap mBitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
+            mBitmap.copyPixelsFromBuffer(buffer);
+            image.close();
+            return Bitmap.createBitmap(mBitmap, 0, 0, width, height);
+        }
     }
 
     private void setViewVisibility(int visibility) {
