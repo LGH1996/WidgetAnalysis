@@ -193,8 +193,8 @@ public class MainFunction {
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
             aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            aParams.width = 150;
-            aParams.height = 150;
+            aParams.width = 250;
+            aParams.height = 250;
 
             bParams = new WindowManager.LayoutParams();
             bParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
@@ -329,12 +329,12 @@ public class MainFunction {
                         case MotionEvent.ACTION_MOVE:
                             int w = aParams.width + Math.round(event.getRawX() - x);
                             int h = aParams.height + Math.round(event.getRawY() - y);
-                            aParams.width = w > 150 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
-                            aParams.height = h > 150 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
+                            aParams.width = w > 250 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
+                            aParams.height = h > 250 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
                             x = Math.round(event.getRawX());
                             y = Math.round(event.getRawY());
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            if (aParams.width < 300) {
+                            if (aParams.width < 600) {
                                 setViewVisibility(View.GONE);
                             } else {
                                 setViewVisibility(View.VISIBLE);
