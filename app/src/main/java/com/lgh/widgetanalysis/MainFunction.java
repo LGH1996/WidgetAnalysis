@@ -391,11 +391,13 @@ public class MainFunction {
         bg.setImageBitmap(mBitmap);
         widgetSelectBinding.frame.addView(bg, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         for (AccessibilityNodeInfo e : nodeList) {
-            final Rect temRect = new Rect();
-            e.getBoundsInScreen(temRect);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(temRect.width(), temRect.height());
-            params.leftMargin = temRect.left;
-            params.topMargin = temRect.top;
+            Rect parentRect = new Rect();
+            e.getBoundsInParent(parentRect);
+            Rect screenRect = new Rect();
+            e.getBoundsInScreen(screenRect);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(screenRect.width(), screenRect.height());
+            params.leftMargin = screenRect.left;
+            params.topMargin = screenRect.top;
             final ImageView img = new ImageView(service);
             img.setBackgroundResource(R.drawable.node);
             img.setFocusableInTouchMode(true);
@@ -415,6 +417,8 @@ public class MainFunction {
                         for (String e : msg.split(";")) {
                             str.append(e.trim()).append("\n");
                         }
+                        str.append("boundsInParent: " + "Rect(").append(px2dp(service, parentRect.left)).append(", ").append(px2dp(service, parentRect.top)).append(" - ").append(px2dp(service, parentRect.right)).append(", ").append(px2dp(service, parentRect.bottom)).append(") " + "dp").append("\n");
+                        str.append("boundsInScreen: " + "Rect(").append(px2dp(service, screenRect.left)).append(", ").append(px2dp(service, screenRect.top)).append(" - ").append(px2dp(service, screenRect.right)).append(", ").append(px2dp(service, screenRect.bottom)).append(") " + "dp").append("\n");
                         viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity + "\n" + str.toString().trim());
                         v.setBackgroundResource(R.drawable.node_focus);
                     } else {
@@ -465,5 +469,10 @@ public class MainFunction {
         viewMessageBinding.left.setVisibility(visibility);
         viewMessageBinding.right.setVisibility(visibility);
         viewMessageBinding.min.setVisibility(visibility);
+    }
+
+    public static int px2dp(Context context, int pxValue) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
     }
 }
