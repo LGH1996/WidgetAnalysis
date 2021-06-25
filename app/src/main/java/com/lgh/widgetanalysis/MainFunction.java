@@ -12,6 +12,8 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.icu.text.SimpleDateFormat;
+import android.icu.util.Calendar;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.projection.MediaProjection;
@@ -28,7 +30,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
 import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
@@ -106,6 +107,14 @@ public class MainFunction {
                         currentActivity = activityName;
                     }
                     break;
+                case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
+                    List<CharSequence> msgList = event.getText();
+                    StringBuilder builder = new StringBuilder();
+                    for (CharSequence s : msgList) {
+                        builder.append(s.toString().replaceAll("\\s", ""));
+                    }
+                    viewMessageBinding.message.setText("receive a new notify -->" + "\neventTime：" + SimpleDateFormat.getDateTimeInstance().format(Calendar.getInstance()) + "\npackage：" + event.getPackageName() + "\nmessage：" + builder.toString());
+                    break;
             }
         } catch (Throwable throwable) {
 //            throwable.printStackTrace();
@@ -113,11 +122,7 @@ public class MainFunction {
     }
 
     public boolean onKeyEvent(KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            Toast toast = Toast.makeText(service, KeyEvent.keyCodeToString(event.getKeyCode()) + " : " + event.getKeyCode(), Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.TOP | Gravity.END, 0, 0);
-            toast.show();
-        }
+        viewMessageBinding.message.setText("receive a new keyEvent -->" + "\neventTime：" + SimpleDateFormat.getDateTimeInstance().format(Calendar.getInstance()) + "\naction：" + (event.getAction() == KeyEvent.ACTION_DOWN ? "ACTION_DOWN" : "ACTION_UP") + "\nkeyName：" + KeyEvent.keyCodeToString(event.getKeyCode()) + "\nkeyCode：" + event.getKeyCode());
         return false;
     }
 
