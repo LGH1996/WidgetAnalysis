@@ -301,6 +301,9 @@ public class MainFunction {
             viewMessageBinding.left.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (nodeInfoList == null || nodeInfoList.isEmpty()) {
+                        return;
+                    }
                     viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (--currentPosition < 0) {
                         currentPosition = nodeInfoList.size() - 1;
@@ -308,10 +311,14 @@ public class MainFunction {
                     refreshLayout(nodeInfoList.get(currentPosition));
                 }
             });
+            viewMessageBinding.left.setClickable(false);
 
             viewMessageBinding.right.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (nodeInfoList == null || nodeInfoList.isEmpty()) {
+                        return;
+                    }
                     viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (++currentPosition > nodeInfoList.size() - 1) {
                         currentPosition = 0;
@@ -319,6 +326,7 @@ public class MainFunction {
                     refreshLayout(nodeInfoList.get(currentPosition));
                 }
             });
+            viewMessageBinding.right.setClickable(false);
 
             viewMessageBinding.drag.setOnTouchListener(new View.OnTouchListener() {
 
