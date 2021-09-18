@@ -2,6 +2,8 @@ package com.lgh.widgetanalysis;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -20,8 +23,10 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button button_0 = findViewById(R.id.button0);
-        button_0.setOnClickListener(new View.OnClickListener() {
+        Button button = findViewById(R.id.button);
+        TextView tv1 = findViewById(R.id.tv_1);
+        TextView tv2 = findViewById(R.id.tv_2);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED && MyAccessibilityService.mainFunction == null) {
@@ -40,6 +45,22 @@ public class MainActivity extends Activity {
                     }
                     Toast.makeText(MainActivity.this, "请打开无障碍服务", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+        tv1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboardManager = getSystemService(ClipboardManager.class);
+                clipboardManager.setPrimaryClip(ClipData.newPlainText(getPackageName(), tv1.getText().toString()));
+                Toast.makeText(MainActivity.this, "该命令已复制到剪贴板", Toast.LENGTH_SHORT).show();
+            }
+        });
+        tv2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboardManager = getSystemService(ClipboardManager.class);
+                clipboardManager.setPrimaryClip(ClipData.newPlainText(getPackageName(), tv2.getText().toString()));
+                Toast.makeText(MainActivity.this, "该命令已复制到剪贴板", Toast.LENGTH_SHORT).show();
             }
         });
     }

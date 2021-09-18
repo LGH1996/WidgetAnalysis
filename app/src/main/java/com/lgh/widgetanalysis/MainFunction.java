@@ -47,7 +47,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * adb shell pm  grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS
+ * adb shell pm grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS
  * adb shell settings put secure enabled_accessibility_services com.lgh.widgetanalysis/com.lgh.widgetanalysis.MyAccessibilityService
  * adb shell settings put secure accessibility_enabled 1
  * <p>

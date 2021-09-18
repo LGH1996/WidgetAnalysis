@@ -15,10 +15,37 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
+            android:text="无法手动开启无障碍服务时，可通过以下之一的adb命令开启（点击复制）："
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tv_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
+            android:layout_marginTop="5dp"
+            android:text="adb shell pm grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tv_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
+            android:layout_marginTop="5dp"
+            android:text="adb shell settings put secure enabled_accessibility_services com.lgh.widgetanalysis/com.lgh.widgetanalysis.MyAccessibilityService"
+            android:textSize="10sp" />
+
         <Button
-            android:id="@+id/button0"
+            android:id="@+id/button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:text="启动" />
+
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
