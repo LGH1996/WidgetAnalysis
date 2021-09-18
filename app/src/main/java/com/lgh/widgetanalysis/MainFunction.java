@@ -3,10 +3,15 @@ package com.lgh.widgetanalysis;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -18,6 +23,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -197,9 +203,9 @@ public class MainFunction {
             aParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
-            aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            aParams.width = 250;
-            aParams.height = 250;
+            aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            aParams.width = dp2px(service, 100);
+            aParams.height = dp2px(service, 100);
 
             bParams = new WindowManager.LayoutParams();
             bParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
@@ -342,12 +348,12 @@ public class MainFunction {
                         case MotionEvent.ACTION_MOVE:
                             int w = aParams.width + Math.round(event.getRawX() - x);
                             int h = aParams.height + Math.round(event.getRawY() - y);
-                            aParams.width = w > 250 && w + aParams.x < metrics.widthPixels ? w : aParams.width;
-                            aParams.height = h > 250 && h + aParams.y < metrics.heightPixels ? h : aParams.height;
+                            aParams.width = w > dp2px(service, 100) && w + aParams.x < metrics.widthPixels ? w : aParams.width;
+                            aParams.height = h > dp2px(service, 100) && h + aParams.y < metrics.heightPixels ? h : aParams.height;
                             x = Math.round(event.getRawX());
                             y = Math.round(event.getRawY());
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            if (aParams.width < 600) {
+                            if (aParams.width < dp2px(service, 200)) {
                                 setViewVisibility(View.GONE);
                             } else {
                                 setViewVisibility(View.VISIBLE);
@@ -371,8 +377,8 @@ public class MainFunction {
                 public void onClick(View view) {
                     mParamWidth = aParams.width;
                     mParamHeight = aParams.height;
-                    aParams.width = 50;
-                    aParams.height = 50;
+                    aParams.width = dp2px(service, 20);
+                    aParams.height = dp2px(service, 20);
                     viewMessageBinding.topView.setVisibility(View.GONE);
                     windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                 }
@@ -484,8 +490,29 @@ public class MainFunction {
         viewMessageBinding.min.setVisibility(visibility);
     }
 
+    public void createForegroundNotification() {
+        Notification.Builder builder = new Notification.Builder(service)
+                .setContentIntent(PendingIntent.getActivity(service, 0x01, new Intent(service, MainActivity.class), PendingIntent.FLAG_ONE_SHOT))
+                .setLargeIcon(BitmapFactory.decodeResource(service.getResources(), R.mipmap.ic_launcher))
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentText("running......");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setChannelId(service.getPackageName());
+            NotificationManager notificationManager = service.getSystemService(NotificationManager.class);
+            NotificationChannel channel = new NotificationChannel(service.getPackageName(), service.getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW);
+            notificationManager.createNotificationChannel(channel);
+        }
+        service.startForeground(0x01, builder.build());
+    }
+
     public static int px2dp(Context context, int pxValue) {
         float scale = context.getResources().getDisplayMetrics().density;
         return (int) (pxValue / scale + 0.5f);
+    }
+
+
+    public static int dp2px(Context context, float dpValue) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 }
