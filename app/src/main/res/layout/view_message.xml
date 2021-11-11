@@ -24,6 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:includeFontPadding="false"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 android:text="@string/invisible"
@@ -34,16 +35,31 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
+                android:id="@+id/up"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp"
+                android:text="@string/up"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/left"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
                 android:id="@+id/left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:includeFontPadding="false"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 android:text="@string/left"
                 android:textColor="@color/white"
-                android:textSize="16sp"
-                android:visibility="gone"
+                android:textSize="15sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/right"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -53,12 +69,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:includeFontPadding="false"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 android:text="@string/right"
                 android:textColor="@color/white"
-                android:textSize="16sp"
-                android:visibility="gone"
+                android:textSize="15sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/min"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -68,12 +84,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:includeFontPadding="false"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 android:text="@string/min"
                 android:textColor="@color/white"
-                android:textSize="20sp"
-                android:visibility="gone"
+                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/close"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -83,14 +99,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:includeFontPadding="false"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="5dp"
                 android:text="@string/close"
                 android:textColor="@color/white"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.constraintlayout.widget.Group
+                android:id="@+id/group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:constraint_referenced_ids="up,left,right,min" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <ScrollView

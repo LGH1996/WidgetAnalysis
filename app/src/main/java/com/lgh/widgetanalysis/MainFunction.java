@@ -78,6 +78,9 @@ public class MainFunction {
 
     private AccessibilityServiceInfo serviceInfo;
 
+    private SimpleKeyValue<ImageView, AccessibilityNodeInfo> imgAndNodes;
+    private SimpleKeyValue.Entry<ImageView, AccessibilityNodeInfo> currentImgAndNode;
+
     public MainFunction(AccessibilityService service) {
         this.service = service;
     }
@@ -195,6 +198,7 @@ public class MainFunction {
             viewMessageBinding.close.setTypeface(iconFont);
             viewMessageBinding.left.setTypeface(iconFont);
             viewMessageBinding.right.setTypeface(iconFont);
+            viewMessageBinding.up.setTypeface(iconFont);
 
             final DisplayMetrics metrics = new DisplayMetrics();
             windowManager.getDefaultDisplay().getRealMetrics(metrics);
@@ -292,6 +296,7 @@ public class MainFunction {
                         viewMessageBinding.onOff.setText(R.string.visible);
                         viewMessageBinding.left.setClickable(true);
                         viewMessageBinding.right.setClickable(true);
+                        viewMessageBinding.up.setClickable(true);
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -299,10 +304,30 @@ public class MainFunction {
                         viewMessageBinding.onOff.setText(R.string.invisible);
                         viewMessageBinding.left.setClickable(false);
                         viewMessageBinding.right.setClickable(false);
+                        viewMessageBinding.up.setClickable(false);
                     }
                     windowManager.updateViewLayout(widgetSelectBinding.getRoot(), bParams);
                 }
             });
+
+            viewMessageBinding.up.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (imgAndNodes == null || imgAndNodes.isEmpty() || currentImgAndNode == null) {
+                        return;
+                    }
+                    AccessibilityNodeInfo parentNode = currentImgAndNode.getValue().getParent();
+                    if (parentNode == null) {
+                        return;
+                    }
+                    ImageView parentImg = imgAndNodes.getKeyByValue(parentNode);
+                    if (parentImg == null) {
+                        return;
+                    }
+                    parentImg.requestFocus();
+                }
+            });
+            viewMessageBinding.up.setClickable(false);
 
             viewMessageBinding.left.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -353,7 +378,7 @@ public class MainFunction {
                             x = Math.round(event.getRawX());
                             y = Math.round(event.getRawY());
                             windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            if (aParams.width < dp2px(service, 200)) {
+                            if (aParams.width < dp2px(service, 250)) {
                                 setViewVisibility(View.GONE);
                             } else {
                                 setViewVisibility(View.VISIBLE);
@@ -406,6 +431,7 @@ public class MainFunction {
 
     private void refreshLayout(ArrayList<AccessibilityNodeInfo> nodeList) {
         widgetSelectBinding.frame.removeAllViews();
+        imgAndNodes = new SimpleKeyValue<>();
         ImageView bg = new ImageView(service);
         bg.setImageBitmap(mBitmap);
         widgetSelectBinding.frame.addView(bg, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
@@ -440,6 +466,7 @@ public class MainFunction {
                         str.append("boundsInScreen: " + "Rect(").append(px2dp(service, screenRect.left)).append(", ").append(px2dp(service, screenRect.top)).append(" - ").append(px2dp(service, screenRect.right)).append(", ").append(px2dp(service, screenRect.bottom)).append(") " + "dp").append("\n");
                         viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity + "\n" + str.toString().trim());
                         v.setBackgroundResource(R.drawable.node_focus);
+                        currentImgAndNode = new SimpleKeyValue.Entry<>(img, e);
                     } else {
                         v.setBackgroundResource(R.drawable.node);
                     }
@@ -451,6 +478,7 @@ public class MainFunction {
                 imgFocus.setBackgroundResource(R.drawable.is_focus);
                 widgetSelectBinding.frame.addView(imgFocus, params);
             }
+            imgAndNodes.put(img, e);
             widgetSelectBinding.frame.addView(img, params);
         }
     }
@@ -485,9 +513,7 @@ public class MainFunction {
     }
 
     private void setViewVisibility(int visibility) {
-        viewMessageBinding.left.setVisibility(visibility);
-        viewMessageBinding.right.setVisibility(visibility);
-        viewMessageBinding.min.setVisibility(visibility);
+        viewMessageBinding.group.setVisibility(visibility);
     }
 
     public void createForegroundNotification() {
@@ -509,7 +535,6 @@ public class MainFunction {
         float scale = context.getResources().getDisplayMetrics().density;
         return (int) (pxValue / scale + 0.5f);
     }
-
 
     public static int dp2px(Context context, float dpValue) {
         float scale = context.getResources().getDisplayMetrics().density;

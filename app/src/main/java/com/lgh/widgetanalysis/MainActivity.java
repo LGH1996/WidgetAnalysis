@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -31,8 +32,6 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 if (checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED && MyAccessibilityService.mainFunction == null) {
                     Settings.Secure.putString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, getPackageName() + File.separator + MyAccessibilityService.class.getName());
-                    Toast.makeText(MainActivity.this, "请再试一次", Toast.LENGTH_SHORT).show();
-                    return;
                 }
                 if (MyAccessibilityService.mainFunction != null) {
                     MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -50,17 +49,19 @@ public class MainActivity extends Activity {
         tv1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("无障碍服务打开命令", tv1.getText().toString());
                 ClipboardManager clipboardManager = getSystemService(ClipboardManager.class);
                 clipboardManager.setPrimaryClip(ClipData.newPlainText(getPackageName(), tv1.getText().toString()));
-                Toast.makeText(MainActivity.this, "该命令已复制到剪贴板", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "该命令已复制到剪贴板，已通过log打印输出", Toast.LENGTH_SHORT).show();
             }
         });
         tv2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("无障碍服务打开命令", tv2.getText().toString());
                 ClipboardManager clipboardManager = getSystemService(ClipboardManager.class);
                 clipboardManager.setPrimaryClip(ClipData.newPlainText(getPackageName(), tv2.getText().toString()));
-                Toast.makeText(MainActivity.this, "该命令已复制到剪贴板", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "该命令已复制到剪贴板，已通过log打印输出", Toast.LENGTH_SHORT).show();
             }
         });
     }
