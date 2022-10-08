@@ -30,10 +30,12 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
+import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -80,6 +82,8 @@ public class MainFunction {
 
     private SimpleKeyValue<ImageView, AccessibilityNodeInfo> imgAndNodes;
     private SimpleKeyValue.Entry<ImageView, AccessibilityNodeInfo> currentImgAndNode;
+
+    private AbsoluteLayout.LayoutParams mainParams;
 
     public MainFunction(AccessibilityService service) {
         this.service = service;
@@ -208,8 +212,8 @@ public class MainFunction {
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
             aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-            aParams.width = dp2px(service, 100);
-            aParams.height = dp2px(service, 100);
+            aParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+            aParams.height = WindowManager.LayoutParams.MATCH_PARENT;
 
             bParams = new WindowManager.LayoutParams();
             bParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
@@ -220,38 +224,54 @@ public class MainFunction {
             bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
             bParams.alpha = 0f;
 
-            viewMessageBinding.getRoot().setOnTouchListener(new View.OnTouchListener() {
+            mainParams = (AbsoluteLayout.LayoutParams) viewMessageBinding.main.getLayoutParams();
+            mainParams.width = dp2px(service, 100);
+            mainParams.height = dp2px(service, 100);
+            mainParams.x = 0;
+            mainParams.y = 0;
+            viewMessageBinding.main.setLayoutParams(mainParams);
 
-                int startX = 0, startY = 0, x = 0, y = 0;
+            viewMessageBinding.main.getViewTreeObserver().addOnComputeInternalInsetsListener(new ViewTreeObserver.OnComputeInternalInsetsListener() {
+                @Override
+                public void onComputeInternalInsets(ViewTreeObserver.InternalInsetsInfo inoutInfo) {
+                    inoutInfo.setTouchableInsets(ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION);
+                    inoutInfo.touchableRegion.set(mainParams.x, mainParams.y, mainParams.x + mainParams.width, mainParams.y + mainParams.height);
+                }
+            });
+
+            viewMessageBinding.main.setOnTouchListener(new View.OnTouchListener() {
+
+                int startRowX = 0, startRowY = 0;
+                int startLpX, startLpY;
 
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
-                            startX = x = Math.round(event.getRawX());
-                            startY = y = Math.round(event.getRawY());
+                            startRowX = Math.round(event.getRawX());
+                            startRowY = Math.round(event.getRawY());
+                            startLpX = mainParams.x;
+                            startLpY = mainParams.y;
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            aParams.x = Math.round(aParams.x + (event.getRawX() - x));
-                            aParams.y = Math.round(aParams.y + (event.getRawY() - y));
-                            x = Math.round(event.getRawX());
-                            y = Math.round(event.getRawY());
-                            windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            mainParams.x = startLpX + Math.round(event.getRawX()) - startRowX;
+                            mainParams.y = startLpY + Math.round(event.getRawY()) - startRowY;
+                            viewMessageBinding.main.setLayoutParams(mainParams);
                             break;
                         case MotionEvent.ACTION_UP:
                             windowManager.getDefaultDisplay().getRealMetrics(metrics);
-                            aParams.x = aParams.x < 0 ? 0 : aParams.x;
-                            aParams.x = aParams.x > metrics.widthPixels - aParams.width ? metrics.widthPixels - aParams.width : aParams.x;
-                            aParams.y = aParams.y < 0 ? 0 : aParams.y;
-                            aParams.y = aParams.y > metrics.heightPixels - aParams.height ? metrics.heightPixels - aParams.height : aParams.y;
-                            if (Math.abs(event.getRawX() - startX) < 10 && Math.abs(event.getRawY() - startY) < 10) {
+                            mainParams.x = Math.max(mainParams.x, 0);
+                            mainParams.x = Math.min(mainParams.x, metrics.widthPixels - mainParams.width);
+                            mainParams.y = Math.max(mainParams.y, 0);
+                            mainParams.y = Math.min(mainParams.y, metrics.heightPixels - mainParams.height);
+                            if (Math.abs(event.getRawX() - startRowX) < 10 && Math.abs(event.getRawY() - startRowY) < 10) {
                                 if (viewMessageBinding.topView.getVisibility() == View.GONE) {
                                     viewMessageBinding.topView.setVisibility(View.VISIBLE);
-                                    aParams.width = mParamWidth;
-                                    aParams.height = mParamHeight;
-                                    windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                                    mainParams.width = mParamWidth;
+                                    mainParams.height = mParamHeight;
                                 }
                             }
+                            viewMessageBinding.main.setLayoutParams(mainParams);
                             break;
                     }
                     return true;
@@ -361,24 +381,25 @@ public class MainFunction {
 
             viewMessageBinding.drag.setOnTouchListener(new View.OnTouchListener() {
 
-                int x = 0, y = 0;
+                int startRowX = 0, startRowY = 0;
+                int startLpWidth, startLpHeight;
 
                 @Override
                 public boolean onTouch(View view, MotionEvent event) {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
-                            x = Math.round(event.getRawX());
-                            y = Math.round(event.getRawY());
+                            startRowX = Math.round(event.getRawX());
+                            startRowY = Math.round(event.getRawY());
+                            startLpWidth = mainParams.width;
+                            startLpHeight = mainParams.height;
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            int w = aParams.width + Math.round(event.getRawX() - x);
-                            int h = aParams.height + Math.round(event.getRawY() - y);
-                            aParams.width = w > dp2px(service, 100) && w + aParams.x < metrics.widthPixels ? w : aParams.width;
-                            aParams.height = h > dp2px(service, 100) && h + aParams.y < metrics.heightPixels ? h : aParams.height;
-                            x = Math.round(event.getRawX());
-                            y = Math.round(event.getRawY());
-                            windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                            if (aParams.width < dp2px(service, 250)) {
+                            mainParams.width = startLpWidth + Math.round(event.getRawX()) - startRowX;
+                            mainParams.height = startLpHeight + Math.round(event.getRawY()) - startRowY;
+                            mainParams.width = Math.max(mainParams.width, dp2px(service, 100));
+                            mainParams.height = Math.max(mainParams.height, dp2px(service, 100));
+                            viewMessageBinding.main.setLayoutParams(mainParams);
+                            if (mainParams.width < dp2px(service, 250)) {
                                 setViewVisibility(View.GONE);
                             } else {
                                 setViewVisibility(View.VISIBLE);
@@ -386,13 +407,11 @@ public class MainFunction {
                             break;
                         case MotionEvent.ACTION_UP:
                             windowManager.getDefaultDisplay().getRealMetrics(metrics);
-                            aParams.x = aParams.x < 0 ? 0 : aParams.x;
-                            aParams.x = aParams.x > metrics.widthPixels - aParams.width ? metrics.widthPixels - aParams.width : aParams.x;
-                            aParams.y = aParams.y < 0 ? 0 : aParams.y;
-                            aParams.y = aParams.y > metrics.heightPixels - aParams.height ? metrics.heightPixels - aParams.height : aParams.y;
+                            mainParams.width = Math.min(mainParams.width, metrics.widthPixels);
+                            mainParams.height = Math.min(mainParams.height, metrics.heightPixels);
+                            viewMessageBinding.main.setLayoutParams(mainParams);
                             break;
                     }
-
                     return true;
                 }
             });
@@ -400,12 +419,12 @@ public class MainFunction {
             viewMessageBinding.min.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mParamWidth = aParams.width;
-                    mParamHeight = aParams.height;
-                    aParams.width = dp2px(service, 20);
-                    aParams.height = dp2px(service, 20);
+                    mParamWidth = mainParams.width;
+                    mParamHeight = mainParams.height;
+                    mainParams.width = dp2px(service, 20);
+                    mainParams.height = dp2px(service, 20);
                     viewMessageBinding.topView.setVisibility(View.GONE);
-                    windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                    viewMessageBinding.main.setLayoutParams(mainParams);
                 }
             });
 
