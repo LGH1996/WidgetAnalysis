@@ -280,7 +280,6 @@ public class MainFunction {
             viewMessageBinding.onOff.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                     viewMessageBinding.message.setText("package: " + currentPackage + "\n" + "activity: " + currentActivity);
                     if (bParams.alpha == 0) {
                         nodeInfoList = new ArrayList<>();

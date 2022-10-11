@@ -10,12 +10,14 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/body_background">
+        android:background="@drawable/box_edging"
+        android:padding="1px">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/topView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@drawable/body_background">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/toolBar"
