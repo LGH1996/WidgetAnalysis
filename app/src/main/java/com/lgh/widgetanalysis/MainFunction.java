@@ -24,6 +24,7 @@ import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -76,7 +77,6 @@ public class MainFunction {
 
     private VirtualDisplay mVirtualDisplay;
     private ImageReader mImageReader;
-    private Bitmap mBitmap;
 
     private AccessibilityServiceInfo serviceInfo;
 
@@ -308,7 +308,6 @@ public class MainFunction {
                                 return o2.size() - o1.size();
                             }
                         });
-                        mBitmap = getCapture();
                         refreshLayout(nodeInfoList.get(currentPosition = 0));
                         bParams.alpha = 1f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
@@ -316,6 +315,20 @@ public class MainFunction {
                         viewMessageBinding.left.setClickable(true);
                         viewMessageBinding.right.setClickable(true);
                         viewMessageBinding.up.setClickable(true);
+
+                        aParams.alpha = 0f;
+                        windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                        Handler.getMain().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Bitmap bitmap = getCapture();
+                                ImageView bg = new ImageView(service);
+                                bg.setImageBitmap(bitmap);
+                                widgetSelectBinding.frame.addView(bg, 0, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                                aParams.alpha = 1f;
+                                windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
+                            }
+                        });
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -450,9 +463,6 @@ public class MainFunction {
     private void refreshLayout(ArrayList<AccessibilityNodeInfo> nodeList) {
         widgetSelectBinding.frame.removeAllViews();
         imgAndNodes = new SimpleKeyValue<>();
-        ImageView bg = new ImageView(service);
-        bg.setImageBitmap(mBitmap);
-        widgetSelectBinding.frame.addView(bg, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         for (AccessibilityNodeInfo e : nodeList) {
             Rect parentRect = new Rect();
             e.getBoundsInParent(parentRect);

@@ -125,7 +125,7 @@
                     app:constraint_referenced_ids="up,left,right,min" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <ScrollView
+            <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginStart="10dp"
@@ -138,12 +138,21 @@
                 app:layout_constraintTop_toBottomOf="@+id/toolBar"
                 app:layout_constraintVertical_bias="0">
 
-                <TextView
-                    android:id="@+id/message"
-                    android:layout_width="match_parent"
+                <HorizontalScrollView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white" />
-            </ScrollView>
+                    android:fadingEdge="horizontal"
+                    android:fadingEdgeLength="10dp"
+                    android:requiresFadingEdge="horizontal"
+                    android:scrollbars="none">
+
+                    <TextView
+                        android:id="@+id/message"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white" />
+                </HorizontalScrollView>
+            </androidx.core.widget.NestedScrollView>
 
             <View
                 android:id="@+id/drag"
