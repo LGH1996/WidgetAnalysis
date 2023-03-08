@@ -34,8 +34,14 @@ public class MainActivity extends Activity {
                     Settings.Secure.putString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, getPackageName() + File.separator + MyAccessibilityService.class.getName());
                 }
                 if (MyAccessibilityService.mainFunction != null) {
-                    MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-                    startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), 0x01);
+                    if (MyAccessibilityService.mainFunction.canCapture()) {
+                        MyAccessibilityService.mainFunction.createForegroundNotification();
+                        MyAccessibilityService.mainFunction.showAnalysisFloatWindow();
+                        finishAndRemoveTask();
+                    } else {
+                        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+                        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), 0x01);
+                    }
                 } else {
                     Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

@@ -85,6 +85,8 @@ public class MainFunction {
 
     private AbsoluteLayout.LayoutParams mainParams;
 
+    private Bitmap bitmap;
+
     public MainFunction(AccessibilityService service) {
         this.service = service;
     }
@@ -101,6 +103,7 @@ public class MainFunction {
     public void onUnbind() {
         if (mVirtualDisplay != null) {
             mVirtualDisplay.release();
+            mVirtualDisplay = null;
         }
     }
 
@@ -321,10 +324,8 @@ public class MainFunction {
                         Handler.getMain().post(new Runnable() {
                             @Override
                             public void run() {
-                                Bitmap bitmap = getCapture();
-                                ImageView bg = new ImageView(service);
-                                bg.setImageBitmap(bitmap);
-                                widgetSelectBinding.frame.addView(bg, 0, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                                bitmap = getCapture();
+                                widgetSelectBinding.background.setImageBitmap(bitmap);
                                 aParams.alpha = 1f;
                                 windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
                             }
@@ -332,7 +333,8 @@ public class MainFunction {
                     } else {
                         bParams.alpha = 0f;
                         bParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-                        widgetSelectBinding.frame.removeAllViews();
+                        widgetSelectBinding.background.setImageBitmap(null);
+                        widgetSelectBinding.widgets.removeAllViews();
                         viewMessageBinding.onOff.setText(R.string.invisible);
                         viewMessageBinding.left.setClickable(false);
                         viewMessageBinding.right.setClickable(false);
@@ -461,7 +463,7 @@ public class MainFunction {
     }
 
     private void refreshLayout(ArrayList<AccessibilityNodeInfo> nodeList) {
-        widgetSelectBinding.frame.removeAllViews();
+        widgetSelectBinding.widgets.removeAllViews();
         imgAndNodes = new SimpleKeyValue<>();
         for (AccessibilityNodeInfo e : nodeList) {
             Rect parentRect = new Rect();
@@ -504,16 +506,15 @@ public class MainFunction {
                 img.requestFocus();
                 ImageView imgFocus = new ImageView(service);
                 imgFocus.setBackgroundResource(R.drawable.is_focus);
-                widgetSelectBinding.frame.addView(imgFocus, params);
+                widgetSelectBinding.widgets.addView(imgFocus, params);
             }
             imgAndNodes.put(img, e);
-            widgetSelectBinding.frame.addView(img, params);
+            widgetSelectBinding.widgets.addView(img, params);
         }
     }
 
     @SuppressLint("WrongConstant")
     public void initCapture(int resultCode, Intent data) {
-        if (mVirtualDisplay != null) return;
         WindowManager mWindowManager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
         DisplayMetrics metrics = new DisplayMetrics();
         mWindowManager.getDefaultDisplay().getRealMetrics(metrics);
@@ -522,7 +523,7 @@ public class MainFunction {
         mVirtualDisplay = mediaProjection.createVirtualDisplay("ScreenCapture", metrics.widthPixels, metrics.heightPixels, metrics.densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mImageReader.getSurface(), null, null);
     }
 
-    public Bitmap getCapture() {
+    private Bitmap getCapture() {
         while (true) {
             Image image = mImageReader.acquireLatestImage();
             if (image == null) continue;
@@ -557,6 +558,10 @@ public class MainFunction {
             notificationManager.createNotificationChannel(channel);
         }
         service.startForeground(0x01, builder.build());
+    }
+
+    public boolean canCapture() {
+        return mVirtualDisplay != null && mImageReader != null;
     }
 
     public static int px2dp(Context context, int pxValue) {
