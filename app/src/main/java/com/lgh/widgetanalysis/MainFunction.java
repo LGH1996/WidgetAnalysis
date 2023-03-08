@@ -214,9 +214,9 @@ public class MainFunction {
             aParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
             aParams.format = PixelFormat.TRANSPARENT;
             aParams.gravity = Gravity.START | Gravity.TOP;
-            aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-            aParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-            aParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+            aParams.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            aParams.width = metrics.widthPixels;
+            aParams.height = metrics.heightPixels;
 
             bParams = new WindowManager.LayoutParams();
             bParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
