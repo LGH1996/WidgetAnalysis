@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.graphics.Typeface;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -26,6 +27,7 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -43,11 +45,18 @@ import android.widget.ImageView;
 import com.lgh.widgetanalysis.databinding.ViewMessageBinding;
 import com.lgh.widgetanalysis.databinding.ViewWidgetSelectBinding;
 
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * adb shell pm grant com.lgh.widgetanalysis android.permission.WRITE_SECURE_SETTINGS
@@ -104,6 +113,9 @@ public class MainFunction {
         if (mVirtualDisplay != null) {
             mVirtualDisplay.release();
             mVirtualDisplay = null;
+        }
+        if (mImageReader != null) {
+            mImageReader.close();
         }
     }
 
@@ -234,13 +246,40 @@ public class MainFunction {
             mainParams.y = 0;
             viewMessageBinding.main.setLayoutParams(mainParams);
 
-            viewMessageBinding.main.getViewTreeObserver().addOnComputeInternalInsetsListener(new ViewTreeObserver.OnComputeInternalInsetsListener() {
-                @Override
-                public void onComputeInternalInsets(ViewTreeObserver.InternalInsetsInfo inoutInfo) {
-                    inoutInfo.setTouchableInsets(ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION);
-                    inoutInfo.touchableRegion.set(mainParams.x, mainParams.y, mainParams.x + mainParams.width, mainParams.y + mainParams.height);
-                }
-            });
+            try {
+                Class<?> internalInsetsInfoClass = Class.forName("android.view.ViewTreeObserver$InternalInsetsInfo");
+                Class<?> onComputeInternalInsetsListenerClass = Class.forName("android.view.ViewTreeObserver$OnComputeInternalInsetsListener");
+                Method addOnComputeInternalInsetsListenerMethod = ViewTreeObserver.class.getDeclaredMethod("addOnComputeInternalInsetsListener", onComputeInternalInsetsListenerClass);
+                addOnComputeInternalInsetsListenerMethod.setAccessible(true);
+                Method setTouchableInsetsMethod = internalInsetsInfoClass.getDeclaredMethod("setTouchableInsets", int.class);
+                setTouchableInsetsMethod.setAccessible(true);
+                Field touchableRegionField = internalInsetsInfoClass.getDeclaredField("touchableRegion");
+                touchableRegionField.setAccessible(true);
+                Field touchTypeField = internalInsetsInfoClass.getDeclaredField("TOUCHABLE_INSETS_REGION");
+                touchTypeField.setAccessible(true);
+                int TOUCHABLE_INSETS_REGION = touchableRegionField.getInt(null);
+                Object proxyInstance = Proxy.newProxyInstance(ViewTreeObserver.class.getClassLoader(), new Class<?>[]{onComputeInternalInsetsListenerClass}, new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+                        setTouchableInsetsMethod.invoke(objects[0], TOUCHABLE_INSETS_REGION);
+                        Region region = (Region) touchableRegionField.get(objects[0]);
+                        region.set(mainParams.x, mainParams.y, mainParams.x + mainParams.width, mainParams.y + mainParams.height);
+                        return null;
+                    }
+                });
+                addOnComputeInternalInsetsListenerMethod.setAccessible(true);
+                addOnComputeInternalInsetsListenerMethod.invoke(viewMessageBinding.main.getViewTreeObserver(), proxyInstance);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
+
+//            viewMessageBinding.main.getViewTreeObserver().addOnComputeInternalInsetsListener(new ViewTreeObserver.OnComputeInternalInsetsListener() {
+//                @Override
+//                public void onComputeInternalInsets(ViewTreeObserver.InternalInsetsInfo inoutInfo) {
+//                    inoutInfo.setTouchableInsets(ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION);
+//                    inoutInfo.touchableRegion.set(mainParams.x, mainParams.y, mainParams.x + mainParams.width, mainParams.y + mainParams.height);
+//                }
+//            });
 
             viewMessageBinding.main.setOnTouchListener(new View.OnTouchListener() {
 
@@ -321,7 +360,7 @@ public class MainFunction {
 
                         aParams.alpha = 0f;
                         windowManager.updateViewLayout(viewMessageBinding.getRoot(), aParams);
-                        Handler.getMain().post(new Runnable() {
+                        viewMessageBinding.getRoot().post(new Runnable() {
                             @Override
                             public void run() {
                                 bitmap = getCapture();
