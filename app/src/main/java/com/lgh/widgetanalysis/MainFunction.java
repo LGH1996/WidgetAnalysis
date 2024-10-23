@@ -99,6 +99,9 @@ public class MainFunction {
         try {
             windowManager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
             serviceInfo = service.getServiceInfo();
+            @SuppressLint("SoonBlockedPrivateApi") Field field = AccessibilityNodeInfo.class.getDeclaredField("DEBUG");
+            field.setAccessible(true);
+            field.setBoolean(null, true);
         } catch (Throwable throwable) {
 //            throwable.printStackTrace();
         }
@@ -516,7 +519,6 @@ public class MainFunction {
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
                         String msg = e.toString();
-                        msg = msg.substring(msg.indexOf("boundsInParent:"), msg.lastIndexOf("actions:"));
                         StringBuilder str = new StringBuilder();
                         for (String e : msg.split(";")) {
                             str.append(e.trim()).append("\n");
